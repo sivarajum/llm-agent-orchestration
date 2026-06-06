@@ -1,90 +1,62 @@
-# POC-05: LLM Agent Orchestration
+# LLM Agent Orchestration
 
-This is a working multi-agent system using LangGraph. API key required for full LLM output; the system also runs in offline fallback mode without one.
+Multi-agent system with LangGraph — researcher/writer/reviewer pipeline with iterative refinement. Offline fallback mode available. FastAPI API + Streamlit dashboard.
 
-Three specialized agents — Researcher, Writer, and Reviewer — are wired into a LangGraph `StateGraph`. The graph runs as a loop: Researcher gathers information, Writer drafts an article, Reviewer scores it, and if the score is below 7/10 the Writer revises. The loop terminates when the draft is approved or after 3 iterations.
+## What It Does
 
----
-
-## Setup
-
-```bash
-# 1. Install dependencies
-pip install -r requirements.txt
-
-# 2. Configure API key
-cp .env.example .env
-# Edit .env — add OPENAI_API_KEY or ANTHROPIC_API_KEY (not both needed)
-
-# 3. Run
-python main.py
-```
-
-The `.env.example` file shows all supported variables.
-
----
-
-## API key
-
-| Key | Model used |
-|-----|-----------|
-| `OPENAI_API_KEY` | `gpt-4o-mini` (preferred, cheaper) |
-| `ANTHROPIC_API_KEY` | `claude-sonnet-4-20250514` (alternative) |
-
-Only one key is needed. If `OPENAI_API_KEY` is set, it takes precedence.
-
----
-
-## Offline fallback mode
-
-If neither key is set, the system runs in fallback mode:
-
-- **Researcher**: Runs web search queries via DuckDuckGo. If all searches fail (no network), uses a canned research template.
-- **Writer**: Generates a structured article from the research text using string templates — no LLM call.
-- **Reviewer**: Applies heuristic scoring (word count, heading count, conclusion presence) — no LLM call.
-
-The graph still runs the full researcher → writer → reviewer loop. Output quality is lower without an LLM but the state machine executes correctly, which makes fallback mode useful for testing the orchestration logic.
-
----
-
-## Project structure
-
-```
-POC-05-LLM-Agent-Orchestration/
-├── main.py
-├── requirements.txt
-├── .env.example
-├── src/
-│   ├── state.py          # AgentState TypedDict — shared state passed between nodes
-│   ├── orchestrator.py   # LangGraph StateGraph definition and run_pipeline()
-│   ├── llm.py            # get_llm() factory — returns ChatOpenAI or ChatAnthropic or None
-│   ├── tools.py          # web_search tool (DuckDuckGo)
-│   ├── agents/
-│   │   ├── researcher.py # research() node — web search + LLM summarization
-│   │   ├── writer.py     # write() node — article generation from research
-│   │   └── reviewer.py   # review() node — quality scoring + feedback
-│   ├── api.py            # FastAPI endpoints
-│   └── ui.py             # Streamlit UI
-└── docs/
-    └── architecture.md   # State machine diagram and LangGraph pattern explanation
-```
-
----
-
-## Running the pipeline directly
-
-```python
-from src.orchestrator import run_pipeline
-
-result = run_pipeline("Kubernetes networking internals")
-print(result["draft"])          # the final article
-print(result["review_feedback"])  # reviewer score and feedback
-print(result["iteration"])      # how many write-review cycles ran
-```
-
----
+- **3 Specialized Agents**: Researcher (web search + summarization), Writer (article generation), Reviewer (quality scoring + feedback)
+- **LangGraph StateGraph**: Agents wired into a state machine with conditional edges — reviewer loops back to writer if score < 7/10
+- **Iterative Refinement**: Write → review → revise loop terminates when approved or after max iterations
+- **Fallback Mode**: Runs without API keys using DuckDuckGo search + template-based writing + heuristic scoring
+- **REST API**: FastAPI endpoints for pipeline execution and status
+- **Dashboard**: Streamlit UI for topic input and pipeline visualization
 
 ## Architecture
 
-See `docs/architecture.md` for the state machine diagram, conditional edge logic,
-and an explanation of the LangGraph `StateGraph` code pattern.
+```
+src/state.py              # AgentState TypedDict (shared state between nodes)
+src/orchestrator.py       # LangGraph StateGraph definition + run_pipeline()
+src/llm.py                # LLM factory (ChatOpenAI / ChatAnthropic / None)
+src/tools.py              # Web search tool (DuckDuckGo)
+src/agents/
+  researcher.py           # Research node — web search + LLM summarization
+  writer.py               # Writer node — article generation from research
+  reviewer.py             # Reviewer node — quality scoring + feedback
+src/api.py                # FastAPI REST API
+src/ui.py                 # Streamlit dashboard
+```
+
+## Quick Start
+
+```bash
+pip install -r requirements.txt
+
+# Optional: configure LLM API key
+cp .env.example .env      # Add OPENAI_API_KEY or ANTHROPIC_API_KEY
+
+python main.py run "Benefits of Python"   # Run pipeline directly
+python main.py api                        # API on :8009
+python main.py ui                         # Dashboard on :8501
+```
+
+## Testing
+
+```bash
+pytest                     # 59 tests
+```
+
+## LLM Configuration
+
+| Key | Model |
+|-----|-------|
+| `OPENAI_API_KEY` | gpt-4o-mini (preferred) |
+| `ANTHROPIC_API_KEY` | claude-sonnet-4-20250514 |
+| Neither | Fallback mode (DuckDuckGo + templates + heuristics) |
+
+## Docker
+
+```bash
+docker compose up --build
+```
+
+See [RUNNING.md](RUNNING.md) for full build, test, and deployment instructions.
