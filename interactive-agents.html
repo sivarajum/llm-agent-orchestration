@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LLM Agent Orchestration - Interactive Demo</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #8B5CF6;
+            --secondary-color: #EC4899;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #8B5CF6 0%, #EC4899 100%);
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        .demo-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .demo-card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            margin-bottom: 30px;
+            overflow: hidden;
+        }
+
+        .agent-card {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 10px;
+            text-align: center;
+        }
+
+        .orchestration-flow {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+    </style>
+</head>
+<body>
+    <div id="app"></div>
+
+    <script type="text/babel">
+        const { useState } = React;
+
+        const App = () => {
+            const [activeTab, setActiveTab] = useState('overview');
+            const [task, setTask] = useState('Research and write about machine learning');
+            const [agentStatus, setAgentStatus] = useState({});
+
+            const agents = [
+                { id: 'researcher', name: 'Researcher Agent', icon: 'fa-search', role: 'Gathers information' },
+                { id: 'writer', name: 'Writer Agent', icon: 'fa-pen', role: 'Creates content' },
+                { id: 'reviewer', name: 'Reviewer Agent', icon: 'fa-check', role: 'Quality checks' }
+            ];
+
+            const runOrchestration = () => {
+                setAgentStatus({ researcher: 'active' });
+                setTimeout(() => {
+                    setAgentStatus({ researcher: 'completed', writer: 'active' });
+                    setTimeout(() => {
+                        setAgentStatus({ researcher: 'completed', writer: 'completed', reviewer: 'active' });
+                        setTimeout(() => {
+                            setAgentStatus({ researcher: 'completed', writer: 'completed', reviewer: 'completed' });
+                        }, 2000);
+                    }, 2000);
+                }, 2000);
+            };
+
+            return (
+                <div className="demo-container">
+                    <div className="header">
+                        <h1><i className="fas fa-robot"></i> LLM Agent Orchestration</h1>
+                        <p>Multi-Agent AI System with LangGraph</p>
+                    </div>
+
+                    <ul className="nav nav-tabs justify-content-center mb-4">
+                        <li className="nav-item">
+                            <button className={`nav-link ${activeTab === 'overview' ? 'active' : ''}`}
+                                onClick={() => setActiveTab('overview')}>
+                                Overview
+                            </button>
+                        </li>
+                        <li className="nav-item">
+                            <button className={`nav-link ${activeTab === 'orchestration' ? 'active' : ''}`}
+                                onClick={() => setActiveTab('orchestration')}>
+                                Orchestration
+                            </button>
+                        </li>
+                    </ul>
+
+                    {activeTab === 'overview' && (
+                        <div className="demo-card">
+                            <div className="card-header" style={{background: 'linear-gradient(45deg, #8B5CF6, #EC4899)', color: 'white', padding: '20px'}}>
+                                <h3><i className="fas fa-info-circle"></i> Agent System Overview</h3>
+                            </div>
+                            <div className="card-body">
+                                <div className="orchestration-flow">
+                                    <div className="agent-card">
+                                        <i className="fas fa-search fa-3x mb-2"></i>
+                                        <h5>Researcher</h5>
+                                        <p>Gathers Information</p>
+                                    </div>
+                                    <i className="fas fa-arrow-right fa-2x"></i>
+                                    <div className="agent-card">
+                                        <i className="fas fa-pen fa-3x mb-2"></i>
+                                        <h5>Writer</h5>
+                                        <p>Creates Content</p>
+                                    </div>
+                                    <i className="fas fa-arrow-right fa-2x"></i>
+                                    <div className="agent-card">
+                                        <i className="fas fa-check fa-3x mb-2"></i>
+                                        <h5>Reviewer</h5>
+                                        <p>Quality Checks</p>
+                                    </div>
+                                </div>
+
+                                <div className="mt-4">
+                                    <h5>Technologies:</h5>
+                                    <span className="badge bg-primary me-2">LangChain</span>
+                                    <span className="badge bg-primary me-2">LangGraph</span>
+                                    <span className="badge bg-primary me-2">Vector DBs</span>
+                                    <span className="badge bg-primary me-2">FastAPI</span>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {activeTab === 'orchestration' && (
+                        <div className="demo-card">
+                            <div className="card-header" style={{background: 'linear-gradient(45deg, #8B5CF6, #EC4899)', color: 'white', padding: '20px'}}>
+                                <h3><i className="fas fa-project-diagram"></i> Agent Orchestration</h3>
+                            </div>
+                            <div className="card-body">
+                                <div className="mb-3">
+                                    <label>Enter Task:</label>
+                                    <textarea className="form-control" rows="3"
+                                        value={task}
+                                        onChange={(e) => setTask(e.target.value)}></textarea>
+                                </div>
+                                <button className="btn btn-primary" onClick={runOrchestration}>
+                                    <i className="fas fa-play"></i> Run Orchestration
+                                </button>
+
+                                <div className="mt-4">
+                                    {agents.map(agent => (
+                                        <div key={agent.id} className={`agent-card ${agentStatus[agent.id] || ''}`}>
+                                            <i className={`fas ${agent.icon} fa-2x mb-2`}></i>
+                                            <h5>{agent.name}</h5>
+                                            <p>{agent.role}</p>
+                                            {agentStatus[agent.id] === 'active' && (
+                                                <div className="spinner-border spinner-border-sm" role="status"></div>
+                                            )}
+                                            {agentStatus[agent.id] === 'completed' && (
+                                                <i className="fas fa-check-circle"></i>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        ReactDOM.render(<App />, document.getElementById('app'));
+    </script>
+</body>
+</html>
+
